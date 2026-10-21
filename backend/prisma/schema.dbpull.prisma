@@ -1,0 +1,281 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String             @id @default(cuid())
+  name           String
+  email          String             @unique
+  emailVerified  Boolean            @default(false)
+  image          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  role           String             @default("user")
+  status         String             @default("active")
+  currentStreak  Int                @default(0)
+  longestStreak  Int                @default(0)
+  points         Int                @default(0)
+  lastActivityAt DateTime?
+  lastStreakAt   DateTime?
+  department     String?
+  language       String?            @default("English")
+  phone          String?
+  semester       String?
+  studentId      String?
+  university     String?
+  accounts       Account[]
+  activityLogs   ActivityLog[]
+  adminActions   AdminAuditLog[]    @relation("AdminAuditActor")
+  analyses       Analysis[]
+  notifications  Notification[]
+  questions      Question[]
+  ragChunks      RagDocumentChunk[]
+  sessions       Session[]
+  uploadJobs     UploadJob[]
+  settings       UserSettings?
+
+  @@map("users")
+}
+
+model UserSettings {
+  id                     String    @id @default(cuid())
+  userId                 String    @unique
+  username               String?   @unique
+  phone                  String?
+  university             String?
+  department             String?
+  degree                 String?
+  semester               String?
+  bio                    String?
+  country                String?
+  timezone               String?
+  language               String    @default("English")
+  defaultAiModel         String    @default("auto")
+  responseLength         String    @default("balanced")
+  temperature            Float     @default(0.2)
+  explanationLevel       String    @default("detailed")
+  difficultyStyle        String    @default("adaptive")
+  markdownOutput         Boolean   @default(true)
+  codeOutput             Boolean   @default(true)
+  studyMode              String    @default("smart")
+  autoSaveHistory        Boolean   @default(true)
+  emailNotifications     Boolean   @default(true)
+  pushNotifications      Boolean   @default(true)
+  weeklyReports          Boolean   @default(true)
+  analysisCompletion     Boolean   @default(true)
+  studyReminders         Boolean   @default(false)
+  leaderboardUpdates     Boolean   @default(true)
+  securityAlerts         Boolean   @default(true)
+  productUpdates         Boolean   @default(false)
+  profileVisibility      String    @default("private")
+  analyticsEnabled       Boolean   @default(true)
+  recommendationsEnabled Boolean   @default(true)
+  activityVisibility     String    @default("private")
+  recoveryEmail          String?
+  recoveryPhone          String?
+  twoFactorEnabled       Boolean   @default(false)
+  lastPasswordChangeAt   DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @default(now()) @updatedAt
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  actionType  String
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@map("activity_logs")
+}
+
+model AdminSetting {
+  id                  String   @id @default("default")
+  aiModel             String   @default("auto")
+  confidenceThreshold Float    @default(0.55)
+  maintenanceMode     Boolean  @default(false)
+  signupsEnabled      Boolean  @default(true)
+  updatedAt           DateTime @default(now()) @updatedAt
+
+  @@map("admin_settings")
+}
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  action    String
+  target    String?
+  createdAt DateTime @default(now())
+  actor     User     @relation("AdminAuditActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("admin_audit_logs")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+model Question {
+  id          String     @id @default(cuid())
+  title       String
+  content     String?
+  difficulty  String?
+  confidence  Float?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  createdById String?
+  analyses    Analysis[]
+  createdBy   User?      @relation(fields: [createdById], references: [id])
+
+  @@index([createdById, createdAt])
+  @@index([createdAt])
+  @@map("questions")
+}
+
+model Analysis {
+  id           String   @id
+  questionId   String
+  questionText String
+  difficulty   String
+  confidence   Float
+  analyzedAt   DateTime @default(now())
+  analyzedById String?
+  analyzedBy   User?    @relation(fields: [analyzedById], references: [id])
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+  @@index([analyzedById, analyzedAt])
+  @@map("analyses")
+}
+
+model Notification {
+  id          String    @id
+  userId      String
+  type        String
+  title       String
+  message     String
+  entityType  String?
+  entityId    String?
+  readAt      DateTime?
+  dismissedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model RagDocumentChunk {
+  id          String                @id
+  source      String?
+  text        String
+  /// ANN index is managed in SQL migrations because Prisma cannot yet represent
+  /// pgvector ivfflat indexes on Unsupported("vector") columns in schema.prisma.
+  embedding   Unsupported("vector")
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  userId      String?
+  uploadJobId String?
+  uploadJob   UploadJob?            @relation(fields: [uploadJobId], references: [id])
+  user        User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, source])
+  @@index([uploadJobId])
+  @@index([embedding], map: "rag_document_chunks_embedding_cosine_idx")
+  @@map("rag_document_chunks")
+}
+
+model UploadJob {
+  id                     String             @id @default(cuid())
+  userId                 String
+  filename               String
+  mimeType               String?
+  fileSize               Int?
+  status                 String             @default("pending")
+  attemptCount           Int                @default(1)
+  normalizedSourceText   String?
+  questionsExtracted     Int                @default(0)
+  questionsClassified    Int                @default(0)
+  classificationFailures Int                @default(0)
+  indexedChunks          Int                @default(0)
+  embeddingModel         String?
+  extractionMethod       String?
+  warningMessage         String?
+  errorMessage           String?
+  retryAvailable         Boolean            @default(false)
+  startedAt              DateTime?
+  finishedAt             DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  ragChunks              RagDocumentChunk[]
+  user                   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("upload_jobs")
+}
+
+model playing_with_neon {
+  id    Int    @id @default(autoincrement())
+  name  String
+  value Float? @db.Real
+}
+
+
