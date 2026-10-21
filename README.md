@@ -4,7 +4,7 @@
 
 **QDCA** helps students and educators classify academic questions by cognitive difficulty, review AI-generated explanations, analyze question sets, and track learning activity.
 
-[Open the live frontend](https://question-difficulty-classification.vercel.app)
+[Open the live frontend](https://question-difficulty-classification.vercel.app/)
 
 ## What it does
 
