@@ -103,7 +103,7 @@ pnpm prisma migrate dev
 pnpm dev
 ```
 
-The API runs at `http://localhost:3000` by default. Interactive API documentation is available at `http://localhost:3000/api/docs`; the OpenAPI JSON is at `http://localhost:3000/api/openapi.json`.
+The API runs at `[http://localhost:3000](https://question-difficulty-classification.onrender.com)` by default. Interactive API documentation is available at `http://localhost:3000/api/docs`; the OpenAPI JSON is at `[http://localhost:3000/api/openapi.json](http://98.88.27.103)`.
 
 ### 2. Configure and start the frontend
 
